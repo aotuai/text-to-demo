@@ -1,0 +1,60 @@
+[
+    {
+        "text": "This BrainFrame demo is shared by E topus, a chipset company in Silicon Valley.",
+        "media": "assets/chipset-begin.mkv",
+        "chapter": 1,
+        "duration": 5.9
+    },
+    {
+        "text": "You can see that the YOLO V 10 model is loaded into BrainFrame.",
+        "media": "assets/chipset-Marker1.mkv",
+        "chapter": 2,
+        "duration": 4.55
+    },
+    {
+        "text": "The YOLO model is trained to detect the chipset position in the socket during the chipset testing process. The pure green bounding box shows that a wrong chipset position is detected when the chip is not in the socket.",
+        "media": "assets/chipset-Marker2.mkv",
+        "mix_audio": true,
+        "media_volume": 0.25,
+        "chapter": 3,
+        "duration": 13.475
+    },
+    {
+        "text": "At the bottom right of the screen, the robot control software receives the detection results and prints 'wrong'.",
+        "media": "assets/chipset-Marker3.mkv",
+        "mix_audio": true,
+        "media_volume": 0.25,
+        "chapter": 4,
+        "duration": 7.025
+    },
+    {
+        "text": "So the system moves the robot arm to reposition the chip.",
+        "media": "assets/chipset-Marker4.mkv",
+        "mix_audio": true,
+        "media_volume": 0.25,
+        "chapter": 5,
+        "duration": 3.825
+    },
+    {
+        "text": "The detection bounding box turns yellow-green, indicating that the robot arm has moved the chip to the correct position.",
+        "media": "assets/chipset-Marker5.mkv",
+        "mix_audio": true,
+        "media_volume": 0.25,
+        "chapter": 6,
+        "duration": 7.825
+    },
+    {
+        "text": "At the bottom right of the screen, the robot control software receives the detection results and prints 'correct'.",
+        "media": "assets/chipset-Marker6.mkv",
+        "mix_audio": true,
+        "media_volume": 0.25,
+        "chapter": 7,
+        "duration": 7.05
+    },
+    {
+        "text": "Whether you need to build AI vision for a robot arm on a factory production line or for humanoid robots, connect thousands of cameras in a data center for enterprise business analytics, or set up an AI security patrol for your own home, BrainFrame handles it all smoothly, on-premises or in the cloud.",
+        "media": "assets/chipset-Marker7.mkv",
+        "chapter": 8,
+        "duration": 19.025
+    }
+]
