@@ -426,10 +426,10 @@ Create a JSON file (e.g., demo.json) containing your script and media paths. The
 
 ```bash
 # Default: Uses Kokoro (local/private)
-python script_to_demo_video.py demo.json
+python text_to_demo.py demo.json
 
 # Alternative: Uses edge-tts (cloud)
-python script_to_demo_video.py demo.json --engine edge
+python text_to_demo.py demo.json --engine edge
 ```
 We recommend Kooha for screen recording or OBS Studio for professionals.
 ```bash
@@ -492,17 +492,17 @@ You can customize the voice, volume, and output behavior using CLI flags.
 ## Selecting a Voice
 ### Using Edge-TTS (Cloud)
 To see all available voices, run:
-`python script_to_demo_video.py --list-voices`
+`python text_to_demo.py --list-voices`
 
 Once you find a voice you like, use the `ShortName` with the `--voice` flag:
-`python script_to_demo_video.py demo.json --voice en-GB-RyanNeural`
+`python text_to_demo.py demo.json --voice en-GB-RyanNeural`
 
 ### Using Kokoro (Local)
 Kokoro uses specific pre-trained voice files. By default, the script falls back to `am_fenrir` (a high-quality American female voice). Some other popular Kokoro voices include:
 * **Female:** `af_heart`, `af_alloy`, `af_bella`
 * **Male:** `am_fenrir`, `am_michael`, `am_puck`
 
-`python script_to_demo_video.py demo.json --engine kokoro --voice am_fenrir`
+`python text_to_demo.py demo.json --engine kokoro --voice am_fenrir`
 
 ## For AI Agents
 If you are an AI assistant generating a payload for this tool:
