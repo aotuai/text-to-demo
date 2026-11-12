@@ -415,23 +415,81 @@ async def main():
     total_start_time = time.time()
     
     parser = argparse.ArgumentParser(
-        description="Generate a narrated video from a text script and media (images/videos).",
-        formatter_class=argparse.RawTextHelpFormatter
+        prog="text_to_demo.py",
+        usage="%(prog)s [options] script_file [output_video]\n"
+              "       %(prog)s --list-voices [--engine {edge,kokoro}]",
+        description="Generate a narrated demo video from a JSON script of text + media "
+                    "(images, screen recordings, video clips).",
+        epilog=(
+            "script format (JSON list, one object per chapter):\n"
+            "  text          narration to speak (required). Use [PAUSE] or [PAUSE 2.5] for silence\n"
+            "                (default 1.0s).\n"
+            "  media         image or video path, relative to the script file. Omit for a black screen.\n"
+            "  media_start   start time (s) of a video clip.          (optional)\n"
+            "  media_end     end time (s) of a video clip; the last frame is frozen if the\n"
+            "                narration is longer.                      (optional)\n"
+            "  mix_audio     true to keep the video's own audio under the narration. (optional)\n"
+            "  media_volume  per-chapter volume of that audio; overrides --media-volume. (optional)\n"
+            "\n"
+            "outputs:\n"
+            "  <output_video>             final video (.mp4 appended if no video extension is given)\n"
+            "  <output_video>_script.txt  YouTube-style chapter timestamps and narration\n"
+            "  <output_video>_chapters/   one chapter_NN.mp4 per chapter\n"
+            "  Note: script_file is rewritten in place with 'duration' and 'chapter' fields.\n"
+            "\n"
+            "examples:\n"
+            "  %(prog)s demo.json                                  # -> demo.mp4, local Kokoro voice\n"
+            "  %(prog)s demo.json out.mp4 --captions --font-size 18\n"
+            "  %(prog)s demo.json --voice bf_emma                  # Kokoro British female\n"
+            "  %(prog)s demo.json --engine edge --voice en-US-AriaNeural\n"
+            "  %(prog)s demo.json --engine edge --lang en-GB --gender female\n"
+            "  %(prog)s --list-voices                              # Kokoro voices\n"
+            "  %(prog)s --list-voices --engine edge                # Edge voices\n"
+            "\n"
+            "requires: ffmpeg on PATH. Kokoro runs locally; edge needs internet access."
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    parser.add_argument("script_file", nargs='?', default=None)
-    parser.add_argument("output_video", nargs='?', default=None)
-    parser.add_argument("--engine", choices=['edge', 'kokoro'], default='kokoro')
-    parser.add_argument("--captions", action="store_true", help="Enable beautiful, styled slide-level captions.")
-    parser.add_argument("--font-size", type=int, default=12, help="Font size for the on-screen captions (default: 12).")
-    parser.add_argument("--caption-color", choices=['black', 'white', 'darkgray', 'lightgray'], default='lightgray', help="Color of the caption text.")
-    parser.add_argument("--media-volume", type=float, default=1.0, help="Global volume level for background media when mixed (default: 1.0).")
-    parser.add_argument("--lang", default="en-US")
-    parser.add_argument("--gender", choices=['male', 'female'], default='male')
-    parser.add_argument("--volume", default="+0%")
-    parser.add_argument("--voice", default=None)
-    parser.add_argument("--verbose", action="store_true")
-    parser.add_argument("--list-voices", action="store_true")
-    
+
+    io = parser.add_argument_group("input / output")
+    io.add_argument("script_file", nargs='?', default=None, metavar="script_file",
+                    help="JSON script describing the chapters (see 'script format' below).")
+    io.add_argument("output_video", nargs='?', default=None, metavar="output_video",
+                    help="Output video path (.mp4/.mov/.mkv/.avi/.webm).\n"
+                         "Default: script_file with a .mp4 extension.")
+
+    voice = parser.add_argument_group("voice")
+    voice.add_argument("--engine", choices=['edge', 'kokoro'], default='kokoro',
+                       help="TTS engine: 'kokoro' = local/private/offline, 'edge' = Microsoft cloud\n"
+                            "(default: kokoro).")
+    voice.add_argument("--voice", default=None, metavar="NAME",
+                       help="Exact voice name, see --list-voices.\n"
+                            "Default: am_fenrir (kokoro); chosen from --lang/--gender (edge).")
+    voice.add_argument("--lang", default="en-US", metavar="LOCALE",
+                       help="[edge only] Locale used to pick a voice when --voice is not set (default: en-US).")
+    voice.add_argument("--gender", choices=['male', 'female'], default='male',
+                       help="[edge only] Gender used to pick a voice when --voice is not set (default: male).")
+    voice.add_argument("--volume", default="+0%", metavar="PCT",
+                       help="[edge only] Narration volume adjustment, e.g. +20%% or -10%% (default: +0%%).")
+    voice.add_argument("--list-voices", action="store_true",
+                       help="List voices for the selected --engine and exit.")
+
+    cap = parser.add_argument_group("captions")
+    cap.add_argument("--captions", action="store_true",
+                     help="Burn styled captions into every chapter (chapters without media always get them).")
+    cap.add_argument("--font-size", type=int, default=12, metavar="N",
+                     help="Caption font size (default: 12).")
+    cap.add_argument("--caption-color", choices=['black', 'white', 'darkgray', 'lightgray'], default='lightgray',
+                     help="Caption text color (default: lightgray).")
+
+    mix = parser.add_argument_group("audio mixing")
+    mix.add_argument("--media-volume", type=float, default=1.0, metavar="X",
+                     help="Volume of a video's original audio when a chapter sets mix_audio\n"
+                          "(1.0 = unchanged, 0.3 = quieter). Per-chapter media_volume overrides it (default: 1.0).")
+
+    misc = parser.add_argument_group("misc")
+    misc.add_argument("--verbose", action="store_true", help="Show ffmpeg error output on failure.")
+
     args = parser.parse_args()
 
     if args.list_voices:
@@ -645,8 +703,8 @@ async def main():
         if narrated_clips:
             print("\n🎬 Sewing all generated chapters into final showcase...")
             if concatenate_videos(narrated_clips, output_video_path, temp_dir, verbose=args.verbose):
-                with open(args.script_file, 'w') as f:
-                    json.dump(script_data, f, indent=4)
+                with open(args.script_file, 'w', encoding='utf-8') as f:
+                    json.dump(script_data, f, indent=4, ensure_ascii=False)
                 
                 base_video_name = os.path.splitext(output_video_path)[0]
                 script_txt_path = f"{base_video_name}_script.txt"

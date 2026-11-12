@@ -430,6 +430,7 @@ python text_to_demo.py demo.json
 
 # Alternative: Uses edge-tts (cloud)
 python text_to_demo.py demo.json --engine edge
+python text_to_demo.py demo_cn.json --engine edge --voice zh-CN-YunxiNeural
 ```
 We recommend Kooha for screen recording or OBS Studio for professionals.
 ```bash
